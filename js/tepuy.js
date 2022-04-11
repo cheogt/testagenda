@@ -11,7 +11,7 @@ $.push({T:'$'
 ,ø:(v,ifn)=>v===ø||v===null?ifn:v
 ,t:(v,w)=>{return v===null||v===ø?'ø':v===screen?'S':v===window?'W':v===document?'D':Object.prototype.toString.call(v)==='[object Arguments]'?'g':v.T?v.T:'u'}
 ,k:function(v){if(!v)return;for(var k,y=1;y<arguments.length;y++){k=arguments[y];if(v[k]!==ø)v=v[k];else return ø;}return v}
-,s:(v,w,encode)=>{w=w||'json';let o=$.s.notations[w],s='';switch($.t(v)){case'ø':return o.ø;case's':case'd':return o.sb+(v+'').to(encode)+o.se;case'a':for(let y in v)s+=(s?o.ac:'')+$.s(v[y],w,encode)+o.ac;return o.ab+s+o.ae;case'o':for(let k in v)s+=(s?o.oc:'')+o.oab+k+o.oae+$.s(v[k],w,encode);return o.ob+s+o.oe}return String(v)}
+,s:(v,w,encode)=>{w=w||'json';let o=$.s.notations[w],s='';switch($.t(v)){case'ø':return o.ø;case's':case'd':return o.sb+(v+'').to(encode)+o.se;case'a':for(let y in v)s+=(s?o.ac:'')+$.s(v[y],w,encode);return o.ab+s+o.ae;case'o':for(let k in v)s+=(s?o.oc:'')+o.oab+k+o.oae+$.s(v[k],w,encode);return o.ob+s+o.oe}return String(v)}
 ,a:(v)=>{let a=[];if(!v)return a;if(v.T==='e'||v.length===ø)return [v];for(let y=0;y<v.length;y++)a.push(v[y]);return a}
 ,e:(s,e)=>{e=e||document;return /^#[\w_-]+$/.test(s)?e.querySelector(s):e.querySelectorAll(s)}
 ,o:(o,w)=>{o=o||{};return $.t(o)==='o'?o:o.to?o.to(w):{}}
@@ -63,6 +63,7 @@ $.o.push({to:{
 });
 $.s.push({notations:{
 'json':{ab:'[',ae:']',ac:',',ob:'{',oe:'}',oc:',',oab:'"',oae:'":',sb:'"',se:'"',ø:'null'}
+,'php':{ab:'Array(',ae:')',ac:',',ob:'Array(',oe:')',oc:',',oab:'"',oae:'"=>',sb:'"',se:'"',ø:'null'}
 ,'css':{ab:'',ae:'',ac:',',ob:'',oe:'',oc:';',oab:'',oae:':',sb:'',se:'',ø:''}
 ,'url':{ab:'',ae:'',ac:',',ob:'',oe:'',oc:'&',oab:'',oae:'=',sb:'',se:'',ø:''}
 },to:{
@@ -236,16 +237,18 @@ $.s.to.push({
 $.ajax=(o)=>{
 	const xhttp=new XMLHttpRequest();
 	const isAsync=!!o.onload;
-	if(o.onload)xhttp.onload=function(){o.onload.call(this,this.responseText)}
-	if(o.send){
+	if(o.onload)xhttp.onload=function(){o.onload.call(xhttp,xhttp.responseText)}
+	if(o.method==='POST'||(!o.method&&o.send)){
 		xhttp.open("POST",o.file,isAsync);
 		xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		let s=o.send;
-		if($.t(s)!=='s')s=$.s(s,'json','url');
-		xhttp.send("datos="+o.send);
-	}else xhttp.open("GET",o.file,isAsync);
-	xhttp.send();
-	return this?.responseText
+		if($.t(s)!=='s')s=$.s(s,'url','url');
+		xhttp.send(s);
+	}else{
+		xhttp.open("GET",o.file+'?ajaxStamp='+new Date().getTime(),isAsync);
+		xhttp.send();
+	}
+	return xhttp
 }
 
 return $})();

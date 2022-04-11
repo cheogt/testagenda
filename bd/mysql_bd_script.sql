@@ -6,4 +6,5 @@ CREATE TABLE actividades(
     ,fecha VARCHAR(10) NOT NULL DEFAULT ''
     ,horaI VARCHAR(6) NOT NULL DEFAULT ''
     ,horaF VARCHAR(6) NOT NULL DEFAULT ''
+    ,actividad VARCHAR(250) NOT NULL DEFAULT ''
 )ENGINE=MyISAM CHARSET=utf8 COLLATE utf8_general_ci;

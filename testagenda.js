@@ -7,15 +7,39 @@ $.css.loadTheme('default');
 onload=function(){
 	window.agenda=new Agenda($('.canvas')[0]);
 
-	agenda.datos.user.id=1
-	agenda.datos.user.nombre="Usuario de Prueba 1"
+	agenda.datos.user.id=25
+	agenda.datos.user.nombre="Usuario de Prueba 25"
 	agenda.datos.agenda=[
-		 ['2022-03-07','05:00','06:30',"Test0"]
-		,['2022-04-01','06:00','08:30',"Test1"]
-		,['2022-04-10','14:15','14:30',"Test3"]
-		,['2022-04-02','10:25','11:25',"Test2"]
-		,['2022-04-24','10:25','11:25',"Test4"]
+		//  ['2022-03-07','05:00','06:30',"Test0"]
+		// ,['2022-04-01','06:00','08:30',"Test1"]
+		// ,['2022-04-10','14:15','14:30',"Test3"]
+		// ,['2022-04-02','10:25','11:25',"Test2"]
+		// ,['2022-04-24','10:25','11:25',"Test4"]
 	]
+	request=$.ajax({
+		file:'php/route.php'
+		,send:{
+			include:"agenda_actividades"
+			,accion:"consultar"
+			,datos:$.s({
+				user:agenda.datos.user
+				,actividades:[]
+			},'json')
+		}
+		// ,onload:(s)=>{
+		// 	let o=$.eval(s,{ok:0,msg:"Consultar: No fue posible recibir respuesta del servidor."});
+		// 	alert($.t(o.datos))
+		// 	log(o.datos)
+		// 	// agenda.datos.agenda=o.datos
+		// }
+	});
+	// alert(request.responseText)
+	let o=$.eval(
+		request.responseText
+		,{ok:0,msg:"Consultar: No fue posible recibir respuesta del servidor."}
+	);
+	log(o)
+	if(o&&o.ok&&o.ok>0)agenda.datos.agenda=o.datos;
 
 	agenda.render.limpiar();
 	agenda.render.usuario();
@@ -44,21 +68,6 @@ class Agenda{
 	}
 
 	// -------------
-	// Base de datos
-	sql={
-		delete:(o)=>this.ajax.json({object:'agenda',action:'delete',datos:{
-			...this.datos.user
-		}})
-		,update:(o)=>this.ajax.json({object:'agenda',action:'update',datos:{
-			...this.datos.user
-			,fecha:o.fecha
-			,horaI:o.horaI
-			,horaF:o.horaF
-			,actividad:o.actividad
-		}})
-	}
-
-	// -------------
 	// HTML DOM
 	render={
 		limpiar:()=>this.eCanvas.innerHTML=""
@@ -69,7 +78,7 @@ class Agenda{
 					{tag:'div',push:[
 						// {tag:'h3',textContent:"Usuario"},
 						{tag:'span',class:"legend",textContent:"Id: "}
-						,{tag:'span',class:"value",textContent:this.datos.user.id}
+						,{tag:'span',class:"value",textContent:this.datos.user.id+''}
 						,{tag:'br'}
 						,{tag:'span',class:"legend",textContent:"Nombre: "}
 						,{tag:'span',class:"value",textContent:this.datos.user.nombre}
@@ -84,7 +93,7 @@ class Agenda{
 			let This=this;
 			this.eCalendar=this.eCanvas.push({tag:'calendar'});
 			this.eCalendar.onselect=()=>This.filtrar();
-			this.eCalendar.onrequery=()=>This.reset();
+			this.eCalendar.onrequery=()=>This.actualizaDatos();
 			this.eAgenda=this.eCanvas.push({tag:'div',class:'grid'});
 		}
 
@@ -99,21 +108,39 @@ class Agenda{
 			});
 			this.eAgenda.push({tag:'hr'});
 			this.eAgenda.push({tag:'button',class:"btnNewAct",textContent:'+ Nueva Actividad',onclick:()=>{
+				This.dialogoFromO({fecha:This.eCalendar.value||"",horaI:"",horaF:"",actividad:""});
 				This.eDialogo.grabar=()=>{
 					let a=[['','','','']];
+					let idx=This.datos.agenda.push(a)-1;
 					let eTr=$.e.table.body(This.eGrid,a);
 					let o=This.dialogoToO();
 					This.rowFromO(eTr,o);
-					This.actualizaDatos(eTr);
+					This.actualizaDatos(eTr,idx);
 				};
 				This.eDialogo.showModal()
 			}});
 			this.eCanvas.push({tag:'hr',style:'margin:15px 0'});
+
+			//Grabar datos
 			this.eCanvas.push({tag:'div',class:'save',push:{tag:'button',textContent:'Grabar Agenda',onclick:()=>{
-				log(This.datos.agenda)
 				$.ajax({
-					
-				})
+					file:'php/route.php'
+					,send:{
+						include:"agenda_actividades"
+						,accion:"grabar"
+						,datos:$.s({
+							user:This.datos.user
+							,actividades:This.datos.agenda
+						},'json')
+					}
+					,onload:(s)=>{
+						let o=$.eval(s,{ok:0,msg:"No fue posible recibir respuesta del servidor."});
+						alert(
+							o.ok&&o.ok>0 ? o.msg+"\nRegistros: "+o.ok
+								 : "No fueron grabados los datos\n"+o.msg
+						)
+					}
+				});
 			}}});
 		}
 
@@ -124,10 +151,11 @@ class Agenda{
 			eTr.push({tag:'td',push:{tag:'button',textContent:'Editar',onclick:function(){
 				let eTr=this.p.p;
 				let o=This.rowToO(eTr);
+				let idx=This.findIndex(o);
 				This.dialogoFromO(o);
 				This.eDialogo.grabar=(o)=>{
 					This.rowFromO(eTr,o);
-					This.actualizaDatos(eTr);
+					This.actualizaDatos(eTr,idx);
 				}
 				This.eDialogo.showModal();
 			}}});
@@ -208,11 +236,25 @@ class Agenda{
 		this.render.rowAddButtonCells(eTr);
 	};
 
-	actualizaDatos=(eTr)=>{
+	actualizaDatos=(eTr,idx)=>{
 		let a=this.datos.agenda;
 		let y=this.eCalendar.conf.year.value;
 		let m=this.eCalendar.conf.month.value;
 		let len=new Date().ymd(y,m,1).monthLastDay();
+
+		//Actualizar array this.datos.agenda
+		if(eTr){
+			let o=this.rowToO(eTr);
+			if(!idx&&idx!==0)idx=this.findIndex(o);
+			if(idx>-1){
+				a[idx][0]=o.fecha;
+				a[idx][1]=o.horaI;
+				a[idx][2]=o.horaF;
+				a[idx][3]=o.actividad;
+			}
+		}
+		//Refrescar fechas con contenido
+		this.eCalendar.$('div.body>div>button').forEach(eBtn=>eBtn.attr({class:{remove:'contains'}}));
 		for(let i=1;i<=len;i++){
 			let sYMDFecha=new Date().ymd(y,m,i).toString('d');
 			a.forEach(row=>{
@@ -222,32 +264,8 @@ class Agenda{
 				}
 			});
 		}
-		//Actualizar array this.datos.agenda
-		if(eTr){
-			let o=this.rowToO(eTr);
-			let idx=this.findIndex(o);
-			if(idx>-1){
-				a[idx][0]=o.fecha;
-				a[idx][1]=o.horaI;
-				a[idx][2]=o.horaF;
-				a[idx][3]=o.actividad;
-			}
-		}
 	};
 
-	// toArray=()=>{
-	// 	this.datos.agenda=[];
-	// 	this.datos.agenda=$.e.table.a(this.eGrid);
-	// 	this.datos.agenda.forEach(row=>{row.pop();row.pop()});
-	// 	log(this.datos.agenda)
-	// }
-	reset=()=>{
-		let This=this;
-		// $.e.table.tBody(this.eGrid).innerHTML="";
-		this.eCalendar.$('div.body>div>button').forEach(eBtn=>eBtn.attr({class:{remove:'contains'}}));
-		// setTimeout(()=>This.actualizaDatos(),500)
-		This.actualizaDatos()
-	}
 	filtrar=()=>{
 		// this.actualizar();
 		$.e.table.tBody(this.eGrid).innerHTML="";

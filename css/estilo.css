@@ -13,7 +13,7 @@ calendar{
 	vertical-align: top;
 }
 calendar>div.body>div>button.contains{
-	color:#0B0;
+	color:#8D0;
 }
 
 /*******
@@ -79,7 +79,9 @@ dialog>label>textarea{
 	width:100%;
 }
 
-
+/*
+ Botón de guardar
+*/
 div.save{
 	text-align: right;
 }
