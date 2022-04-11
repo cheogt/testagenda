@@ -1,0 +1,93 @@
+span.legend{
+	font-style: italic;
+	color:#666;
+}
+span.value{
+	font-weight: bold;
+	color:#000;
+	border-bottom:dotted 1px #888;
+	line-height:20px;
+}
+
+calendar{
+	vertical-align: top;
+}
+calendar>div.body>div>button.contains{
+	color:#0B0;
+}
+
+/*******
+ Seccion: tabla de actividades
+*/
+div.grid{
+	display: inline-block;
+	vertical-align: top;
+	padding: 5px;
+	border:solid 2px #888;
+	border-radius: 5px;
+	margin-left:10px;
+}
+table.actividades{
+	border-collapse:collapse;
+}
+
+table.actividades>tbody>tr:nth-child(even){
+	background-color:#E9E9E9;
+}
+table.actividades>tbody>tr:nth-child(odd){
+	background-color:#F9F9F9;
+}
+
+table.actividades>tbody>tr>td{
+	border:solid 1px #CCC;
+	padding:4px;
+}
+
+button.btnNewAct{
+	margin-top:5px;
+}
+
+
+/*******
+ Seccion: Grabar actividades
+*/
+dialog{
+	width:70vw;
+	padding:10px;
+	box-shadow:2px 2px 5px #222;
+	border:none;
+	border-radius:5px;
+	background-color:#DEF;
+}
+dialog::backdrop{
+	background-color: rgb(255,255,255,50%);
+}
+dialog>button{
+	font-weight: bold;
+	padding: 5px;
+	margin: 5px;
+	color:#06A;
+}
+dialog>label{
+	line-height:35px;
+}
+dialog>label>span.legend{
+	display: inline-block;
+	min-width:150px;
+}
+dialog>label>textarea{
+	width:100%;
+}
+
+
+div.save{
+	text-align: right;
+}
+div.save>button{
+	font-weight:bold;
+	font-size: 110%;
+	padding:10px;
+	background-color: rgb(17, 17, 17);
+	color:#ADF;
+	border-radius: 4px;
+}
